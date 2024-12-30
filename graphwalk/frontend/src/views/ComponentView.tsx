@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { RefreshCcw } from 'lucide-react';
 import { FaceGrid } from '../components/FaceGrid';
 import { Face } from '../components/Face';
+import { PersonSearchOrAdd } from '../components/PersonSearchOrAdd';
+import { User, UserPlus } from 'lucide-react';
 
 interface Neighbor {
   comp_id: string;
@@ -12,10 +14,16 @@ interface Neighbor {
   size: number;
 }
 
+interface Person {
+  id: number;
+  name: string;
+}
+
 interface ComponentData {
   photos: string[];
   neighbors: Neighbor[];
   size: number;
+  person?: Person;
 }
 
 export function ComponentView() {
@@ -24,6 +32,7 @@ export function ComponentView() {
   const [isLoading, setIsLoading] = useState(true);
   const { id } = useParams();
   const navigate = useNavigate();
+  const [isAssigningPerson, setIsAssigningPerson] = useState(false);
 
   const loadComponent = async (compId: string) => {
     try {
@@ -56,6 +65,20 @@ export function ComponentView() {
     }
   };
 
+  const handlePersonSelect = async (person: Person) => {
+    try {
+      await fetch(`http://localhost:8000/component/${componentId}/person`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ person_id: person.id }),
+      });
+      reloadComponent();
+      setIsAssigningPerson(false);
+    } catch (error) {
+      console.error('Failed to assign person:', error);
+    }
+  };
+
   useEffect(() => {
     if (id) {
       loadComponent(id);
@@ -69,9 +92,31 @@ export function ComponentView() {
       <header className="bg-base-100 shadow-lg">
         <div className="container mx-auto px-4 py-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-primary">
-              Component #{componentId} ({componentData.size} photos)
-            </h1>
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-bold text-primary">
+                Component #{componentId} ({componentData.size} photos)
+              </h1>
+              {componentData.person ? (
+                <div className="flex items-center gap-2 bg-base-100 px-3 py-1 rounded-full">
+                  <User className="w-4 h-4" />
+                  <span>{componentData.person.name}</span>
+                  <button
+                    className="btn btn-ghost btn-xs"
+                    onClick={() => setIsAssigningPerson(true)}
+                  >
+                    Edit
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className="btn btn-outline btn-sm gap-2"
+                  onClick={() => setIsAssigningPerson(true)}
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Assign Person
+                </button>
+              )}
+            </div>
             <div className="flex gap-2">
               <button
                 onClick={reloadComponent}
@@ -91,6 +136,13 @@ export function ComponentView() {
           </div>
         </div>
       </header>
+
+      {isAssigningPerson && (
+        <PersonSearchOrAdd
+          onSelect={handlePersonSelect}
+          onClose={() => setIsAssigningPerson(false)}
+        />
+      )}
 
       <main className="container mx-auto py-8">
         <AnimatePresence mode="wait">

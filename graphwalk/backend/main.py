@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 import numpy as np
 import os
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Union
 import random
 import networkx as nx
 from pydantic import BaseModel
@@ -64,6 +64,10 @@ class Person(BaseModel):
 class PersonCreate(BaseModel):
     name: str
 
+class ComponentPerson(BaseModel):
+    person_id: int
+
+
 PEOPLE_FILE = Path("../../people.json")
 
 # Load or initialize people database
@@ -73,10 +77,24 @@ try:
 except FileNotFoundError:
     people = {}
 
+COMPONENT_PEOPLE_FILE = Path("../../component_people.json")
+
+# Load or initialize component-person assignments
+try:
+    with open(COMPONENT_PEOPLE_FILE) as f:
+        component_people = {int(k): int(v) for k, v in json.load(f).items()}
+except FileNotFoundError:
+    component_people = {}
+
 def save_people():
     """Persist people database to disk"""
     with open(PEOPLE_FILE, 'w') as f:
         json.dump({str(k): v.name for k, v in people.items()}, f)
+
+def save_component_people():
+    """Persist component-person assignments to disk"""
+    with open(COMPONENT_PEOPLE_FILE, 'w') as f:
+        json.dump({str(k): v for k, v in component_people.items()}, f)
 
 @app.get("/random-faces")
 async def get_random_faces(count: int = 20) -> List[str]:
@@ -134,6 +152,8 @@ async def get_face_image(face_id: str):
 async def get_random_component() -> int:
     random_face_id = random.choice(list(face_to_component.keys()))
     comp_id = face_to_component[random_face_id]
+    if comp_id in component_people:
+        return await get_random_component()
     return comp_id
 
 @app.get("/component/{comp_id}")
@@ -152,10 +172,17 @@ async def get_component(comp_id: int):
             }
             for n in neighbors
         ]
+
+    # Add person info if assigned
+    person = None
+    if comp_id in component_people and component_people[comp_id] in people:
+        person = people[component_people[comp_id]]
+
     return {
         "size": len(components[comp_id]),
         "photos": photo_sample,
-        "neighbors": neighbors
+        "neighbors": neighbors,
+        "person": person
     }
 
 @app.get("/compare-components/{comp_id1}/{comp_id2}")
@@ -274,6 +301,55 @@ async def delete_person(person_id: int):
     del people[person_id]
     save_people()
     return {"status": "success"}
+
+@app.put("/component/{comp_id}/person")
+async def assign_person_to_component(comp_id: int, data: ComponentPerson):
+    """Assign a person to a component"""
+    # Validate person exists
+    if data.person_id not in people:
+        raise HTTPException(status_code=404, detail="Person not found")
+
+    # Validate component exists
+    if comp_id >= len(components):
+        raise HTTPException(status_code=404, detail="Component not found")
+
+    # Assign person to component
+    component_people[comp_id] = data.person_id
+    save_component_people()
+
+    return {"status": "success"}
+
+@app.delete("/component/{comp_id}/person")
+async def remove_person_from_component(comp_id: int):
+    """Remove person assignment from a component"""
+    if comp_id in component_people:
+        del component_people[comp_id]
+        save_component_people()
+
+    return {"status": "success"}
+
+@app.get("/people/{person_id}/components")
+async def get_person_components(person_id: int):
+    """Get all components assigned to a person"""
+    if person_id not in people:
+        raise HTTPException(status_code=404, detail="Person not found")
+
+    assigned_components = [
+        comp_id for comp_id, pid in component_people.items()
+        if pid == person_id
+    ]
+
+    return {
+        "person": people[person_id],
+        "components": [
+            {
+                "id": comp_id,
+                "size": len(components[comp_id]),
+                "sample_face_id": str(random.choice(components[comp_id]))
+            }
+            for comp_id in assigned_components
+        ]
+    }
 
 if __name__ == "__main__":
     import uvicorn

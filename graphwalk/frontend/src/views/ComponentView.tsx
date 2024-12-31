@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { RefreshCcw } from 'lucide-react';
+import { RefreshCcw, X, User, UserPlus, GitBranch } from 'lucide-react';
 import { FaceGrid } from '../components/FaceGrid';
 import { Face } from '../components/Face';
 import { PersonSearchOrAdd } from '../components/PersonSearchOrAdd';
-import { User, UserPlus } from 'lucide-react';
 
 interface Neighbor {
   comp_id: string;
@@ -26,13 +25,20 @@ interface ComponentData {
   person?: Person;
 }
 
+interface SubdivisionProposal {
+  components: string[][];
+}
+
 export function ComponentView() {
   const [componentData, setComponentData] = useState<ComponentData>({ photos: [], neighbors: [], size: 0 });
   const [componentId, setComponentId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [subdivisionProposal, setSubdivisionProposal] = useState<SubdivisionProposal | null>(null);
+  const [isShowingSubdivisions, setIsShowingSubdivisions] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
   const [isAssigningPerson, setIsAssigningPerson] = useState(false);
+  const [differentPersonIndices, setDifferentPersonIndices] = useState<number[]>([]);
 
   const loadComponent = async (compId: string) => {
     try {
@@ -79,6 +85,44 @@ export function ComponentView() {
     }
   };
 
+  const proposeSubdivision = async () => {
+    try {
+      const response = await fetch(`http://localhost:8000/propose_subdivision/${componentId}`);
+      const data = await response.json();
+      setSubdivisionProposal(data);
+      setIsShowingSubdivisions(true);
+    } catch (error) {
+      console.error('Failed to propose subdivision:', error);
+    }
+  };
+
+  const handleSubdivisionSubmit = async () => {
+    if (!subdivisionProposal) {
+      return;
+    }
+    const submit_data: number[] = [];
+    for (let i = 0; i < differentPersonIndices.length; i++) {
+      const comp = subdivisionProposal.components[differentPersonIndices[i]];
+      for (let j = 0; j < comp.length; j++) {
+        submit_data.push(parseInt(comp[j]));
+      }
+    }
+    try {
+      const response = await fetch(`http://localhost:8000/component/${componentId}/subdivide`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submit_data),
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        setComponentId(data.new_component);
+        navigate(`/components/${componentId}`);
+      }
+    } catch (error) {
+      console.error('Failed to submit subdivision:', error);
+    }
+  };
+
   useEffect(() => {
     if (id) {
       loadComponent(id);
@@ -116,6 +160,13 @@ export function ComponentView() {
                   Assign Person
                 </button>
               )}
+              <button
+                onClick={proposeSubdivision}
+                className="btn btn-info btn-sm gap-2"
+              >
+                <GitBranch className="w-4 h-4" />
+                Propose Subdivision
+              </button>
             </div>
             <div className="flex gap-2">
               <button
@@ -144,6 +195,82 @@ export function ComponentView() {
         />
       )}
 
+      {isShowingSubdivisions && subdivisionProposal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-base-100 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Proposed Subdivisions</h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSubdivisionProposal({...subdivisionProposal})} 
+                  className="btn btn-ghost btn-sm"
+                >
+                  <RefreshCcw className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setIsShowingSubdivisions(false)}
+                  className="btn btn-ghost btn-sm"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="space-y-8">
+              {subdivisionProposal.components.map((subcomponent, index) => {
+                const randomPhotos = subcomponent
+                  .sort(() => Math.random() - 0.5)
+                  .slice(0, 20);
+
+                return (
+                  <div key={index} className="space-y-2">
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-lg font-semibold">
+                        Subcomponent {index + 1} ({subcomponent.length} photos)
+                      </h3>
+                      <label className="label cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-primary"
+                          checked={differentPersonIndices.includes(index)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setDifferentPersonIndices([...differentPersonIndices, index]);
+                            } else {
+                              setDifferentPersonIndices(
+                                differentPersonIndices.filter((i) => i !== index)
+                              );
+                            }
+                          }}
+                        />
+                        <span className="label-text ml-2">Different Person</span>
+                      </label>
+                    </div>
+                    <FaceGrid faceIds={randomPhotos} />
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setIsShowingSubdivisions(false);
+                  setDifferentPersonIndices([]);
+                }}
+                className="btn btn-ghost"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubdivisionSubmit}
+                className="btn btn-primary"
+                disabled={differentPersonIndices.length === 0}
+              >
+                Submit Subdivisions
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <main className="container mx-auto py-8">
         <AnimatePresence mode="wait">
           {isLoading ? (

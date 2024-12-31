@@ -41,6 +41,12 @@ faces = data['faces']
 face_ids = data['face_ids']
 subgraph = None # nx.read_gexf(settings.subgraph_dir / f"face_similarity_components_{settings.subgraph_suffix}.gexf")
 
+graph = None
+def load_graph():
+    global graph
+    if graph is None:
+        graph = nx.read_gexf("../../face_similarity.gexf")
+
 # with open(settings.subgraph_dir / f"nontrivial_components_{settings.subgraph_suffix}.json", 'r') as f:
 #     components = json.load(f)
 
@@ -350,6 +356,33 @@ async def get_person_components(person_id: int):
             for comp_id in assigned_components
         ]
     }
+
+
+@app.get("/propose_subdivision/{comp_id}")
+async def propose_subdivision(comp_id: int):
+    """Propose subdivision of a component"""
+    load_graph()
+    subgraph = graph.subgraph(components[comp_id])
+    subcomponents = nx.community.louvain_communities(subgraph)
+    ret = []
+    for subcomp in subcomponents:
+        ret.append(list(subcomp))
+
+    return {"status": "success", "components": ret}
+
+
+@app.post("/component/{comp_id}/subdivide")
+async def submit_subdivision(comp_id: int, remove_indices: List[int]):
+    """Handle subdivision of a component based on user feedback"""
+    print(f"submitting subdivision for component {comp_id} with indices {remove_indices}")
+    remove_indices = set([str(i) for i in remove_indices])
+    src_comp = [i for i in components[comp_id] if i not in remove_indices]
+    components[comp_id] = src_comp
+    components.append(list(remove_indices))
+    with open(settings.subgraph_dir / f"louvain_communities.json", 'w') as f:
+        json.dump(components, f, indent=4)
+    return {"status": "success", "new_component": len(components)-1}
+
 
 if __name__ == "__main__":
     import uvicorn

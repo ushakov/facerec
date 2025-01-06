@@ -3,6 +3,7 @@ import json
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 import numpy as np
 import os
 from pathlib import Path
@@ -24,6 +25,14 @@ class Settings(BaseSettings):
 settings = Settings()
 
 app = FastAPI()
+
+# Mount static files
+app.mount("/assets", StaticFiles(directory="dist/assets"), name="assets")
+
+# Serve index.html at root
+@app.get("/")
+async def serve_index():
+    return FileResponse("dist/index.html")
 
 # CORS middleware
 app.add_middleware(

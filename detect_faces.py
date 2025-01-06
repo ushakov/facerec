@@ -48,7 +48,7 @@ def get_unprocessed_images(session) -> list[int]:
 def process_image(image_id: int, session: models.sessionmaker, lance_table) -> int:
     image_obj = session.query(models.Image).get(image_id)
     image_path = Path(image_obj.best_filename)
-    image: np.ndarray = images.get_image(image_path)
+    image: np.ndarray | None = images.get_image(image_path)
     faces = []
     if image is not None:
         try:

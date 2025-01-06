@@ -67,7 +67,7 @@ export function PersonSearchDropdown({ onSelect, placeholder = 'Search people...
     setIsOpen(false);
   };
 
-  const getHighlightedName = (name: string, score: number, matchedOn: string) => {
+  const getHighlightedName = (name: string, matchedOn: string) => {
     if (matchedOn === 'prefix' && query) {
       const index = name.toLowerCase().indexOf(query.toLowerCase());
       if (index >= 0) {
@@ -121,7 +121,7 @@ export function PersonSearchDropdown({ onSelect, placeholder = 'Search people...
                   onClick={() => handleSelect(result)}
                 >
                   <div className="font-medium">
-                    {getHighlightedName(result.person.name, result.score, result.matched_on)}
+                    {getHighlightedName(result.person.name, result.matched_on)}
                   </div>
                   <div className="text-xs text-base-content/60">
                     {result.matched_on === 'prefix' ? 'Starts with' :

@@ -3,3 +3,9 @@ faces.lance/
 .venv/
 graphwalk/frontend/node_modules/
 __pycache__/
+*.json
+*.npz
+*.gexf
+*.db
+v1/
+.envrc

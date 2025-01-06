@@ -53,7 +53,7 @@ def get_jpeg_image(path: Path) -> np.ndarray:
     arr = np.array(img)
     return arr
 
-def get_image(path: Path) -> np.ndarray:
+def get_image(path: Path) -> np.ndarray | None:
     try:
         if path.suffix.lower() in models.RAW_EXTENSIONS:
             image = get_thumb_image(path)

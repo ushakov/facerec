@@ -16,10 +16,9 @@ interface PersonSearchResult {
 interface PersonSearchOrAddProps {
   onSelect: (person: Person) => void;
   onClose: () => void;
-  className?: string;
 }
 
-export function PersonSearchOrAdd({ onSelect, onClose, className = '' }: PersonSearchOrAddProps) {
+export function PersonSearchOrAdd({ onSelect, onClose }: PersonSearchOrAddProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PersonSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);

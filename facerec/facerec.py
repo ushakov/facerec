@@ -5,9 +5,8 @@ class FaceRec:
         self.model = model_path
 
     def serve(self):
-        import os
-        os.chdir('graphwalk/backend')
-        os.system('uvicorn main:app --reload')
+        import uvicorn
+        uvicorn.run('facerec.graphwalk.backend.main:app', port=8000)
 
 
 def run():

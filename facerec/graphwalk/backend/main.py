@@ -1,5 +1,6 @@
 import math
 import json
+from dataclasses import dataclass
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -11,28 +12,28 @@ from typing import List, Dict, Optional, Tuple, Union
 import random
 import networkx as nx
 from pydantic import BaseModel
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from heapq import nsmallest
 from itertools import product
 from fuzzywuzzy import process
+from importlib.resources import files
 
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict()
 
-    subgraph_dir: Path = Path("../../")
-    subgraph_suffix: str = "0.3"
+@dataclass
+class Settings:
+    static_root = files('facerec')
+    subgraph_dir: Path = Path(".")
 
 settings = Settings()
 
 app = FastAPI()
 
 # Mount static files
-app.mount("/assets", StaticFiles(directory="dist/assets"), name="assets")
+app.mount("/assets", StaticFiles(directory=str(settings.static_root / "graphwalk/frontend/dist/assets")), name="assets")
 
 # Serve index.html at root
 @app.get("/")
 async def serve_index():
-    return FileResponse("dist/index.html")
+    return FileResponse(str(settings.static_root / "graphwalk/frontend/dist/index.html"))
 
 # CORS middleware
 app.add_middleware(
@@ -44,8 +45,8 @@ app.add_middleware(
 )
 
 # Load face embeddings
-FACES_DIR = Path("../../faces_extr")
-data = np.load("../../faces.npz")
+FACES_DIR = settings.subgraph_dir / "faces_extr"
+data = np.load(str(settings.subgraph_dir / "faces.npz"))
 faces = data['faces']
 face_ids = data['face_ids']
 subgraph = None # nx.read_gexf(settings.subgraph_dir / f"face_similarity_components_{settings.subgraph_suffix}.gexf")
@@ -54,7 +55,7 @@ graph = None
 def load_graph():
     global graph
     if graph is None:
-        graph = nx.read_gexf("../../face_similarity.gexf")
+        graph = nx.read_gexf(str(settings.subgraph_dir / "face_similarity.gexf"))
 
 # with open(settings.subgraph_dir / f"nontrivial_components_{settings.subgraph_suffix}.json", 'r') as f:
 #     components = json.load(f)

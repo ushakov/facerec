@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 include = [
     "**/*.py",
-    "graphwalk/frontend/dist",
+    "facerec/graphwalk/frontend/dist",
 ]
 
 [project]
@@ -36,7 +36,7 @@ dependencies = [
 ]
 
 [project.scripts]
-facerec = "facerec:run"
+facerec = "facerec.facerec:run"
 
 [dependency-groups]
 dev = [

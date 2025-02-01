@@ -59,22 +59,27 @@ def load_graph():
 
 @app.on_event("startup")
 async def load_data():
-    global FACES_DIR, face_ctx, faces, face_ids, components, face_to_component
+    global FACES_DIR, face_ctx, faces, face_ids, components, face_to_component, PEOPLE_FILE, COMPONENT_PEOPLE_FILE, people, component_people
     FACES_DIR = settings.subgraph_dir / "faces_extr"
     face_ctx = models.Context(settings.subgraph_dir)
     faces, face_ids = face_ctx.get_embeddings()
     components = []
     face_to_component = {}
-    # global FACES_DIR, faces, face_ids, components, face_to_component
-    #
-    # data = np.load(str(settings.subgraph_dir / "faces.npz"))
-    # print(data.files)
-    # faces = data['faces']
-    # faces = faces / np.linalg.norm(faces, axis=1)[:, None]
-    # face_ids = data['face_ids']
+
     with open(settings.subgraph_dir / f"louvain_communities.json", 'r') as f:
         components = json.load(f)
     face_to_component = {face_id: i for i, component in enumerate(components) for face_id in component}
+
+    PEOPLE_FILE = settings.subgraph_dir / "people.json"
+    COMPONENT_PEOPLE_FILE = settings.subgraph_dir / "component_people.json"
+    people = {}
+    component_people = {}
+    if PEOPLE_FILE.exists():
+        with open(PEOPLE_FILE, 'r') as f:
+            people = json.load(f)
+    if COMPONENT_PEOPLE_FILE.exists():
+        with open(COMPONENT_PEOPLE_FILE, 'r') as f:
+            component_people = json.load(f)
 
 class FaceWithSimilarity(BaseModel):
     id: str
@@ -90,25 +95,6 @@ class PersonCreate(BaseModel):
 
 class ComponentPerson(BaseModel):
     person_id: int
-
-
-PEOPLE_FILE = Path("../../people.json")
-
-# Load or initialize people database
-try:
-    with open(PEOPLE_FILE) as f:
-        people = {int(k): Person(id=int(k), name=v) for k, v in json.load(f).items()}
-except FileNotFoundError:
-    people = {}
-
-COMPONENT_PEOPLE_FILE = Path("../../component_people.json")
-
-# Load or initialize component-person assignments
-try:
-    with open(COMPONENT_PEOPLE_FILE) as f:
-        component_people = {int(k): int(v) for k, v in json.load(f).items()}
-except FileNotFoundError:
-    component_people = {}
 
 def save_people():
     """Persist people database to disk"""

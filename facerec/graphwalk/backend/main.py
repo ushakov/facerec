@@ -49,6 +49,7 @@ face_ctx = None
 
 components = None
 face_to_component = None
+graph = None
 subgraph = None
 
 def load_graph():
@@ -366,7 +367,7 @@ async def get_person_components(person_id: int):
 async def propose_subdivision(comp_id: int):
     """Propose subdivision of a component"""
     load_graph()
-    subgraph = graph.subgraph(components[comp_id])
+    subgraph = graph.subgraph([str(i) for i in components[comp_id]])
     subcomponents = nx.community.louvain_communities(subgraph)
     ret = []
     for subcomp in subcomponents:

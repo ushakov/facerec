@@ -17,6 +17,8 @@ from itertools import product
 from fuzzywuzzy import process
 from importlib.resources import files
 
+from facerec import models
+
 
 @dataclass
 class Settings:
@@ -30,10 +32,6 @@ app = FastAPI()
 # Mount static files
 app.mount("/assets", StaticFiles(directory=str(settings.static_root / "graphwalk/frontend/dist/assets")), name="assets")
 
-# Serve index.html at root
-@app.get("/")
-async def serve_index():
-    return FileResponse(str(settings.static_root / "graphwalk/frontend/dist/index.html"))
 
 # CORS middleware
 app.add_middleware(
@@ -44,29 +42,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load face embeddings
-FACES_DIR = settings.subgraph_dir / "faces_extr"
-data = np.load(str(settings.subgraph_dir / "faces.npz"))
-faces = data['faces']
-face_ids = data['face_ids']
-subgraph = None # nx.read_gexf(settings.subgraph_dir / f"face_similarity_components_{settings.subgraph_suffix}.gexf")
+FACES_DIR = None
+faces = None
+face_ids = None
+face_ctx = None
 
-graph = None
+components = None
+face_to_component = None
+subgraph = None
+
 def load_graph():
     global graph
     if graph is None:
         graph = nx.read_gexf(str(settings.subgraph_dir / "face_similarity.gexf"))
 
-# with open(settings.subgraph_dir / f"nontrivial_components_{settings.subgraph_suffix}.json", 'r') as f:
-#     components = json.load(f)
 
-with open(settings.subgraph_dir / f"louvain_communities.json", 'r') as f:
-    components = json.load(f)
-
-face_to_component = {face_id: i for i, component in enumerate(components) for face_id in component}
-
-# Normalize embeddings for cosine similarity
-faces = faces / np.linalg.norm(faces, axis=1)[:, None]
+@app.on_event("startup")
+async def load_data():
+    global FACES_DIR, face_ctx, faces, face_ids, components, face_to_component
+    FACES_DIR = settings.subgraph_dir / "faces_extr"
+    face_ctx = models.Context(settings.subgraph_dir)
+    faces, face_ids = face_ctx.get_embeddings()
+    components = []
+    face_to_component = {}
+    # global FACES_DIR, faces, face_ids, components, face_to_component
+    #
+    # data = np.load(str(settings.subgraph_dir / "faces.npz"))
+    # print(data.files)
+    # faces = data['faces']
+    # faces = faces / np.linalg.norm(faces, axis=1)[:, None]
+    # face_ids = data['face_ids']
+    with open(settings.subgraph_dir / f"louvain_communities.json", 'r') as f:
+        components = json.load(f)
+    face_to_component = {face_id: i for i, component in enumerate(components) for face_id in component}
 
 class FaceWithSimilarity(BaseModel):
     id: str
@@ -392,6 +400,12 @@ async def submit_subdivision(comp_id: int, remove_indices: List[int]):
     with open(settings.subgraph_dir / f"louvain_communities.json", 'w') as f:
         json.dump(components, f, indent=4)
     return {"status": "success", "new_component": len(components)-1}
+
+# Serve index.html as a last resort (on all other paths)
+@app.get("/{path:path}")
+async def serve_index(path: str):
+    return FileResponse(str(settings.static_root / "graphwalk/frontend/dist/index.html"))
+
 
 
 if __name__ == "__main__":

@@ -57,6 +57,44 @@ facerec serve --data-dir /path/to/database
 ```
 This will start a web server on port 8000 where you can explore and organize the face clusters.
 
+## Web Interface Usage
+
+The web interface provides several views to explore and organize your face collection:
+
+1. **Face Explorer** (`/faces`)
+   - Browse random faces from your collection
+   - Click on any face to see similar faces
+   - View similarity scores between faces
+   - Navigate through face clusters
+
+2. **Components** (`/components`)
+   - View and manage face clusters
+   - Assign people to clusters
+   - Propose and manage cluster subdivisions
+   - See component sizes and relationships
+
+4. **People Management** (`/people`)
+   - Create and manage people profiles
+   - Search through known people
+   - Associate people with face clusters
+   - Organize your photo collection by person
+
+### Navigation and Common Actions
+
+- **Top Navigation Bar**: Use the navigation bar to switch between main views (Explore, Components, People)
+- **Component View**:
+  - Click "Load Random Component" to view a different face cluster
+  - Use "Assign Person" to link a person to all faces in the component
+  - Click "Propose Subdivision" if you notice different people in the same cluster
+- **Face Explorer**:
+  - Click "Shuffle Faces" to view different random faces
+  - Click any face to see similar faces across your collection
+  - When viewing similar faces, similarity scores are shown for each match
+- **People View**:
+  - Use the search bar to find existing people
+  - Click the "+" button to add a new person
+  - Each person card shows their name and allows deletion
+
 ## How it Works
 
 1. The discovery phase scans your photo directory and creates a database of images. (NEF, ARW, JPG images are supported)

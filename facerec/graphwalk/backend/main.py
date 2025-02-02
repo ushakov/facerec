@@ -113,10 +113,10 @@ def save_component_people():
         json.dump({k: v for k, v in component_people.items()}, f)
 
 @app.get("/random-faces")
-async def get_random_faces(count: int = 20) -> List[str]:
-    """Get random face IDs"""
+async def get_random_faces(count: int = 20) -> List[FaceWithSimilarity]:
+    """Get random faces with component and person information"""
     indices = random.sample(range(len(face_ids)), min(count, len(face_ids)))
-    return [str(face_ids[i]) for i in indices]
+    return [create_face_with_similarity(face_ids[i]) for i in indices]
 
 class SimilarFacesResponse(BaseModel):
     query_face: FaceWithSimilarity

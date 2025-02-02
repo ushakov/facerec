@@ -39,8 +39,8 @@ export function ExploreView() {
   const loadRandomFaces = async () => {
     try {
       setIsLoading(true);
-      const faceIds = await getRandomFaces(20);
-      setFaces(faceIds.map(id => ({ id, component_id: '', person_name: null })));
+      const faces = await getRandomFaces(20);
+      setFaces(faces);
       setSelectedFace(null);
     } catch (error) {
       console.error('Failed to load random faces:', error);

@@ -9,7 +9,7 @@ export interface FaceWithSimilarity {
     similarity?: number;
 }
 
-export const getRandomFaces = async (count: number = 20): Promise<string[]> => {
+export const getRandomFaces = async (count: number = 20): Promise<FaceWithSimilarity[]> => {
     const response = await fetch(`${API_BASE}/random-faces?count=${count}`);
     if (!response.ok) throw new Error('Failed to fetch random faces');
     return response.json();

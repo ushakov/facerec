@@ -103,7 +103,7 @@ export function ExploreView() {
                   <FaceGrid
                     faceIds={similarFaces.map(face => face.id)}
                     similarities={Object.fromEntries(similarFaces.map(face => [face.id, face.similarity ?? 0]))}
-                    componentIds={Object.fromEntries(similarFaces.map(face => [face.id, face.component_id]))}
+                    componentIds={Object.fromEntries(similarFaces.map(face => [face.id, face.person_name ?? face.component_id]))}
                     selectedFaceId={selectedFaceId}
                   />
                 </>

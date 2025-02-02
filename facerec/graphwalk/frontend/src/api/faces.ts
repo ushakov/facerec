@@ -5,6 +5,7 @@ export const getFaceImageUrl = (faceId: string) => `${API_BASE}/face/${faceId}`;
 export interface FaceWithSimilarity {
     id: string;
     component_id: string;
+    person_name: string | null;
     similarity?: number;
 }
 

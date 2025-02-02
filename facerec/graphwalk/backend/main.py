@@ -77,14 +77,19 @@ async def load_data():
     component_people = {}
     if PEOPLE_FILE.exists():
         with open(PEOPLE_FILE, 'r') as f:
-            people = json.load(f)
+            data = json.load(f)
+            for k, v in data.items():
+                people[int(k)] = Person(id=int(k), name=v)
     if COMPONENT_PEOPLE_FILE.exists():
         with open(COMPONENT_PEOPLE_FILE, 'r') as f:
-            component_people = json.load(f)
+            data = json.load(f)
+            for k, v in data.items():
+                component_people[int(k)] = int(v)
 
 class FaceWithSimilarity(BaseModel):
-    id: str
-    component_id: str | None
+    id: int
+    component_id: int | None
+    person_name: str | None
     similarity: float
 
 class Person(BaseModel):
@@ -100,12 +105,12 @@ class ComponentPerson(BaseModel):
 def save_people():
     """Persist people database to disk"""
     with open(PEOPLE_FILE, 'w') as f:
-        json.dump({str(k): v.name for k, v in people.items()}, f)
+        json.dump({k: v.name for k, v in people.items()}, f)
 
 def save_component_people():
     """Persist component-person assignments to disk"""
     with open(COMPONENT_PEOPLE_FILE, 'w') as f:
-        json.dump({str(k): v for k, v in component_people.items()}, f)
+        json.dump({k: v for k, v in component_people.items()}, f)
 
 @app.get("/random-faces")
 async def get_random_faces(count: int = 20) -> List[str]:
@@ -114,10 +119,10 @@ async def get_random_faces(count: int = 20) -> List[str]:
     return [str(face_ids[i]) for i in indices]
 
 @app.get("/similar-faces/{face_id}")
-async def get_similar_faces(face_id: str, count: int = 20, per_bucket: int = 5) -> List[FaceWithSimilarity]:
+async def get_similar_faces(face_id: int, count: int = 20, per_bucket: int = 5) -> List[FaceWithSimilarity]:
     """Get similar faces based on embedding distance"""
     try:
-        idx = list(face_ids).index(int(face_id))
+        idx = face_ids.index(face_id)
         vec = faces[idx]
 
         # Calculate cosine similarities
@@ -140,10 +145,17 @@ async def get_similar_faces(face_id: str, count: int = 20, per_bucket: int = 5) 
         for bucket in bucket_list:
             if len(bucket) > 0:
                 sample = random.sample(bucket, min(count, len(bucket)))
-                res.extend([
-                    FaceWithSimilarity(id=str(face_ids[idx]), similarity=dist, component_id=str(face_to_component[str(face_ids[idx])]) if str(face_ids[idx]) in face_to_component else None)
-                    for idx, dist in sample
-                ])
+                for idx, dist in sample:
+                    if face_ids[idx] in face_to_component:
+                        component_id = face_to_component[face_ids[idx]]
+                    else:
+                        component_id = None
+                    if component_id is not None and component_id in component_people:
+                        person_id = component_people[component_id]
+                        person_name = people[person_id].name
+                    else:
+                        person_name = None
+                    res.append(FaceWithSimilarity(id=str(face_ids[idx]), similarity=dist, component_id=component_id, person_name=person_name))
             if len(res) >= count:
                 return res[:count]
         return res[:count]

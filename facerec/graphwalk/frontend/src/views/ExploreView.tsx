@@ -88,7 +88,9 @@ export function ExploreView() {
               {selectedFace ? (
                 <>
                   <div className="flex justify-center mb-8">
-                    <Face face={selectedFace} />
+                    <div className="w-72 h-72">
+                      <Face face={selectedFace} />
+                    </div>
                   </div>
                   <h2 className="text-xl font-semibold text-center mb-4">Similar Faces</h2>
                   <FaceGrid faces={similarFaces} selectedFaceId={selectedFace.id} />

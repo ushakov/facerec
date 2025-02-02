@@ -10,7 +10,7 @@ include = [
 
 [project]
 name = "facerec"
-version = "0.1.4"
+version = "0.1.5"
 description = "Face recognition and clustering tool"
 readme = "README.md"
 requires-python = "==3.12.*"

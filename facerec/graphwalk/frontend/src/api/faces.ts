@@ -26,13 +26,13 @@ export const getSimilarFaces = async (faceId: string, count: number = 20, per_bu
     return response.json();
 };
 
-interface FacePairComparison {
+export interface FacePairComparison {
   distance: number;
-  face1_id: string;
-  face2_id: string;
+  face1_id: number;
+  face2_id: number;
 }
 
-export const compareComponents = async (comp1Id: string, comp2Id: string): Promise<FacePairComparison[]> => {
+export const compareComponents = async (comp1Id: number, comp2Id: number): Promise<FacePairComparison[]> => {
   const response = await fetch(`${API_BASE}/compare-components/${comp1Id}/${comp2Id}`);
   if (!response.ok) throw new Error('Failed to compare components');
   return response.json();

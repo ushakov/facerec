@@ -1,28 +1,23 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { compareComponents } from '../api/faces';
+import { compareComponents, FacePairComparison } from '../api/faces';
 import { getFaceImageUrl } from '../api/faces';
 
-interface FacePair {
-  distance: number;
-  face1_id: string;
-  face2_id: string;
-}
-
 export function CompareView() {
-  const [pairs, setPairs] = useState<FacePair[]>([]);
+  const [pairs, setPairs] = useState<FacePairComparison[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { id1, id2 } = useParams();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!id1 || !id2) return;
+    if (isNaN(parseInt(id1, 10)) || isNaN(parseInt(id2, 10))) return;
 
     const loadComparison = async () => {
       try {
         setIsLoading(true);
-        const data = await compareComponents(id1, id2);
+        const data = await compareComponents(parseInt(id1, 10), parseInt(id2, 10));
         setPairs(data);
       } catch (error) {
         console.error('Failed to compare components:', error);

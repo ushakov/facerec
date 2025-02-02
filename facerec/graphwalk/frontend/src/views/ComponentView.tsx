@@ -5,6 +5,7 @@ import { RefreshCcw, X, User, UserPlus, GitBranch } from 'lucide-react';
 import { FaceGrid } from '../components/FaceGrid';
 import { Face } from '../components/Face';
 import { PersonSearchOrAdd } from '../components/PersonSearchOrAdd';
+import { FaceWithSimilarity } from '../api/faces';
 
 interface Neighbor {
   comp_id: string;
@@ -202,7 +203,7 @@ export function ComponentView() {
               <h2 className="text-2xl font-bold">Proposed Subdivisions</h2>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setSubdivisionProposal({...subdivisionProposal})} 
+                  onClick={() => setSubdivisionProposal({...subdivisionProposal})}
                   className="btn btn-ghost btn-sm"
                 >
                   <RefreshCcw className="w-4 h-4" />
@@ -220,6 +221,12 @@ export function ComponentView() {
                 const randomPhotos = subcomponent
                   .sort(() => Math.random() - 0.5)
                   .slice(0, 20);
+
+                const facesData: FaceWithSimilarity[] = randomPhotos.map(id => ({
+                  id,
+                  component_id: componentId,
+                  person_name: componentData.person?.name || null,
+                }));
 
                 return (
                   <div key={index} className="space-y-2">
@@ -245,7 +252,7 @@ export function ComponentView() {
                         <span className="label-text ml-2">Different Person</span>
                       </label>
                     </div>
-                    <FaceGrid faceIds={randomPhotos} />
+                    <FaceGrid faces={facesData} />
                   </div>
                 );
               })}
@@ -294,7 +301,11 @@ export function ComponentView() {
               <div>
                 <h2 className="text-xl font-semibold mb-4">Photos in Component</h2>
                 <FaceGrid
-                  faceIds={componentData.photos}
+                  faces={componentData.photos.map(id => ({
+                    id,
+                    component_id: componentId,
+                    person_name: componentData.person?.name || null,
+                  }))}
                 />
               </div>
 
@@ -304,9 +315,13 @@ export function ComponentView() {
                   {componentData.neighbors.map((neighbor) => (
                     <Face
                       key={neighbor.comp_id}
-                      faceId={neighbor.sample_face_id}
-                      compareLink={`/compare/${componentId}/${neighbor.comp_id}`}
-                      componentId={neighbor.comp_id}
+                      face={{
+                        id: neighbor.sample_face_id,
+                        component_id: neighbor.comp_id,
+                        person_name: null,
+                        similarity: neighbor.distance,
+                      }}
+                      onClick={() => navigate(`/components/${neighbor.comp_id}`)}
                       caption={
                         <>
                           Component #{neighbor.comp_id} ({neighbor.size} photos)

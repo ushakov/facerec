@@ -13,7 +13,6 @@ interface FaceProps {
 export const Face: React.FC<FaceProps> = ({
     face,
     isSelected,
-    compareLink,
     caption,
     onClick,
 }) => {

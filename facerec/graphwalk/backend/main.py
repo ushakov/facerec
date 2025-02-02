@@ -14,7 +14,7 @@ import networkx as nx
 from pydantic import BaseModel
 from heapq import nsmallest
 from itertools import product
-from fuzzywuzzy import process
+from rapidfuzz import process
 from importlib.resources import files
 
 from facerec import models
@@ -166,7 +166,7 @@ async def get_similar_faces(face_id: int, count: int = 20, per_bucket: int = 5) 
         res = []
         for bucket in bucket_list:
             if len(bucket) > 0:
-                sample = random.sample(bucket, min(count, len(bucket)))
+                sample = random.sample(bucket, min(per_bucket, len(bucket)))
                 for idx, dist in sample:
                     res.append(create_face_with_similarity(face_ids[idx], dist))
             if len(res) >= count:

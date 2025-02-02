@@ -1,35 +1,31 @@
 import { motion } from 'framer-motion';
 import { Users } from 'lucide-react';
-import { getFaceImageUrl } from '../api/faces';
-import { Link } from 'react-router-dom';
+import { FaceWithSimilarity, getFaceImageUrl } from '../api/faces';
 
 interface FaceProps {
-    faceId: string;
+    face: FaceWithSimilarity;
     isSelected?: boolean;
-    similarity?: number;
     compareLink?: string;
     caption?: React.ReactNode;
-    componentId?: string;
-    componentName?: string;
+    onClick?: () => void;
 }
 
 export const Face: React.FC<FaceProps> = ({
-    faceId,
+    face,
     isSelected,
-    similarity,
     compareLink,
     caption,
-    componentId,
-    componentName,
+    onClick,
 }) => {
-    const componentDisplay = componentName || `${componentId}`;
-    const componentLink = componentId ? `/components/${componentId}` : undefined;
+    const componentDisplay = face.person_name || face.component_id;
+
     return (
         <motion.div
-            layoutId={`face-${faceId}`}
-            className="relative group"
+            layoutId={`face-${face.id}`}
+            className="relative group w-72 h-72"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            onClick={onClick}
         >
             <motion.div
                 className={`
@@ -41,42 +37,28 @@ export const Face: React.FC<FaceProps> = ({
                 whileTap={{ scale: 0.95 }}
             >
                 <img
-                    src={getFaceImageUrl(faceId)}
-                    alt={`Face ${faceId}`}
+                    src={getFaceImageUrl(face.id)}
+                    alt={`Face ${face.id}`}
                     className="w-full h-full object-cover aspect-square"
                     loading="lazy"
                 />
             </motion.div>
 
-            {similarity !== undefined && (
+            {face.similarity !== undefined && (
                 <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-full text-xs">
-                    {similarity.toFixed(2)}
+                    {face.similarity.toFixed(2)}
                 </div>
             )}
 
-            {componentLink && (
-                <Link
-                    to={componentLink}
-                    className="absolute bottom-2 right-2 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full flex flex-row items-center gap-2"
-                    title="View cluster"
-                >
-                    <Users size={16} /> {componentDisplay}
-                </Link>
-            )}
-
-            {compareLink && (
-                <Link
-                    to={compareLink}
-                    className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-full text-xs
-                             opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    Compare
-                </Link>
+            {componentDisplay && (
+                <div className="cursor-pointer absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded-full flex flex-row items-center gap-2">
+                    <Users size={16} />
+                    <span>{componentDisplay}</span>
+                </div>
             )}
 
             {caption && (
-                <div className="mt-2 text-sm">
+                <div className="mt-2 text-sm text-gray-600">
                     {caption}
                 </div>
             )}

@@ -15,7 +15,12 @@ export const getRandomFaces = async (count: number = 20): Promise<string[]> => {
     return response.json();
 };
 
-export const getSimilarFaces = async (faceId: string, count: number = 20, per_bucket: number = 5): Promise<FaceWithSimilarity[]> => {
+export interface SimilarFacesResponse {
+    query_face: FaceWithSimilarity;
+    similar_faces: FaceWithSimilarity[];
+}
+
+export const getSimilarFaces = async (faceId: string, count: number = 20, per_bucket: number = 5): Promise<SimilarFacesResponse> => {
     const response = await fetch(`${API_BASE}/similar-faces/${faceId}?count=${count}&per_bucket=${per_bucket}`);
     if (!response.ok) throw new Error('Failed to fetch similar faces');
     return response.json();

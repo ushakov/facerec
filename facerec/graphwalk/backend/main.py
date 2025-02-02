@@ -118,12 +118,34 @@ async def get_random_faces(count: int = 20) -> List[str]:
     indices = random.sample(range(len(face_ids)), min(count, len(face_ids)))
     return [str(face_ids[i]) for i in indices]
 
-@app.get("/similar-faces/{face_id}")
-async def get_similar_faces(face_id: int, count: int = 20, per_bucket: int = 5) -> List[FaceWithSimilarity]:
+class SimilarFacesResponse(BaseModel):
+    query_face: FaceWithSimilarity
+    similar_faces: List[FaceWithSimilarity]
+
+def create_face_with_similarity(face_id: int, similarity: float = 0.0) -> FaceWithSimilarity:
+    """Helper function to create FaceWithSimilarity objects with component and person info"""
+    component_id = face_to_component.get(face_id)
+    person_name = None
+    if component_id is not None and component_id in component_people:
+        person_id = component_people[component_id]
+        person_name = people[person_id].name
+
+    return FaceWithSimilarity(
+        id=str(face_id),
+        similarity=similarity,
+        component_id=component_id,
+        person_name=person_name
+    )
+
+@app.get("/similar-faces/{face_id}", response_model=SimilarFacesResponse)
+async def get_similar_faces(face_id: int, count: int = 20, per_bucket: int = 5) -> SimilarFacesResponse:
     """Get similar faces based on embedding distance"""
     try:
         idx = face_ids.index(face_id)
         vec = faces[idx]
+
+        # Create query face response
+        query_face = create_face_with_similarity(face_id)
 
         # Calculate cosine similarities
         distances = 1 - np.dot(faces, vec)
@@ -146,19 +168,10 @@ async def get_similar_faces(face_id: int, count: int = 20, per_bucket: int = 5) 
             if len(bucket) > 0:
                 sample = random.sample(bucket, min(count, len(bucket)))
                 for idx, dist in sample:
-                    if face_ids[idx] in face_to_component:
-                        component_id = face_to_component[face_ids[idx]]
-                    else:
-                        component_id = None
-                    if component_id is not None and component_id in component_people:
-                        person_id = component_people[component_id]
-                        person_name = people[person_id].name
-                    else:
-                        person_name = None
-                    res.append(FaceWithSimilarity(id=str(face_ids[idx]), similarity=dist, component_id=component_id, person_name=person_name))
+                    res.append(create_face_with_similarity(face_ids[idx], dist))
             if len(res) >= count:
-                return res[:count]
-        return res[:count]
+                return SimilarFacesResponse(query_face=query_face, similar_faces=res[:count])
+        return SimilarFacesResponse(query_face=query_face, similar_faces=res[:count])
     except ValueError as e:
         print(f"Face ID not found: {face_id}: {e}")
         raise HTTPException(status_code=404, detail="Face ID not found")

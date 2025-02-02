@@ -1,33 +1,27 @@
 import { Face } from './Face';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { FaceWithSimilarity } from '../api/faces';
 
 interface FaceGridProps {
-    faceIds: string[];
+    faces: FaceWithSimilarity[];
     selectedFaceId?: string;
-    similarities?: Record<string, number>;
-    componentIds?: Record<string, string>;
-    componentNames?: Record<string, string>;
 }
 
 export const FaceGrid: React.FC<FaceGridProps> = ({
-    faceIds,
+    faces,
     selectedFaceId,
-    similarities,
-    componentIds,
-    componentNames,
 }) => {
+    const navigate = useNavigate();
+
     return (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4">
-            {faceIds.map((faceId) => (
-                <Link key={faceId} to={`/faces/${faceId}`}>
-                    <Face
-                        faceId={faceId}
-                        isSelected={selectedFaceId === faceId}
-                        similarity={similarities?.[faceId]}
-                        componentId={componentIds?.[faceId]}
-                        componentName={componentNames?.[faceId]}
-                    />
-                </Link>
+            {faces.map((face) => (
+                <Face
+                    key={face.id}
+                    face={face}
+                    isSelected={selectedFaceId === face.id}
+                    onClick={() => navigate(`/faces/${face.id}`)}
+                />
             ))}
         </div>
     );

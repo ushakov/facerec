@@ -1,15 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FaceGrid } from '../components/FaceGrid';
-import { getRandomFaces, getSimilarFaces, getFaceImageUrl, FaceWithSimilarity } from '../api/faces';
+import { getRandomFaces, getSimilarFaces, FaceWithSimilarity } from '../api/faces';
 import { useParams } from 'react-router-dom';
+import { Face } from '../components/Face';
 
 export function ExploreView() {
   const { id } = useParams();
-  const [faceIds, setFaceIds] = useState<string[]>([]);
-  const [selectedFaceId, setSelectedFaceId] = useState<string | null>(null);
+  const [faces, setFaces] = useState<FaceWithSimilarity[]>([]);
+  const [selectedFace, setSelectedFace] = useState<FaceWithSimilarity | null>(null);
   const [similarFaces, setSimilarFaces] = useState<FaceWithSimilarity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleFaceClick = useCallback(async (faceId: string) => {
+    try {
+      setIsLoading(true);
+      const response = await getSimilarFaces(faceId);
+      setSimilarFaces(response.similar_faces);
+      setSelectedFace(response.query_face);
+    } catch (error) {
+      console.error('Failed to load similar faces:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -20,34 +34,20 @@ export function ExploreView() {
         }
     }
     load();
-  }, [id]);
+  }, [id, handleFaceClick]);
 
   const loadRandomFaces = async () => {
     try {
       setIsLoading(true);
-      const faces = await getRandomFaces(20);
-      setSelectedFaceId(null);
-      setFaceIds(faces);
+      const faceIds = await getRandomFaces(20);
+      setFaces(faceIds.map(id => ({ id, component_id: '', person_name: null })));
+      setSelectedFace(null);
     } catch (error) {
       console.error('Failed to load random faces:', error);
     } finally {
       setIsLoading(false);
     }
   };
-
-  const handleFaceClick = async (faceId: string) => {
-    try {
-      setIsLoading(true);
-      setSelectedFaceId(faceId);
-      const similar = await getSimilarFaces(faceId);
-      setSimilarFaces(similar);
-    } catch (error) {
-      console.error('Failed to load similar faces:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -85,33 +85,16 @@ export function ExploreView() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              {selectedFaceId ? (
+              {selectedFace ? (
                 <>
                   <div className="flex justify-center mb-8">
-                    <motion.div
-                      layoutId={`face-${selectedFaceId}`}
-                      className="w-64 h-64 rounded-lg overflow-hidden shadow-xl"
-                    >
-                      <img
-                        src={getFaceImageUrl(selectedFaceId)}
-                        alt={`Face ${selectedFaceId}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </motion.div>
+                    <Face face={selectedFace} />
                   </div>
                   <h2 className="text-xl font-semibold text-center mb-4">Similar Faces</h2>
-                  <FaceGrid
-                    faceIds={similarFaces.map(face => face.id)}
-                    similarities={Object.fromEntries(similarFaces.map(face => [face.id, face.similarity ?? 0]))}
-                    componentIds={Object.fromEntries(similarFaces.map(face => [face.id, face.person_name ?? face.component_id]))}
-                    selectedFaceId={selectedFaceId}
-                  />
+                  <FaceGrid faces={similarFaces} selectedFaceId={selectedFace.id} />
                 </>
               ) : (
-                <FaceGrid
-                  faceIds={faceIds}
-                  selectedFaceId={selectedFaceId ?? undefined}
-                />
+                <FaceGrid faces={faces} />
               )}
             </motion.div>
           )}

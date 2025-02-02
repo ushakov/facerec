@@ -8,8 +8,8 @@ import { PersonSearchOrAdd } from '../components/PersonSearchOrAdd';
 import { FaceWithSimilarity } from '../api/faces';
 
 interface Neighbor {
-  comp_id: string;
-  sample_face_id: string;
+  comp_id: number;
+  sample_face_id: number;
   distance: number;
   size: number;
 }
@@ -20,19 +20,19 @@ interface Person {
 }
 
 interface ComponentData {
-  photos: string[];
+  photos: number[];
   neighbors: Neighbor[];
   size: number;
   person?: Person;
 }
 
 interface SubdivisionProposal {
-  components: string[][];
+  components: number[][];
 }
 
 export function ComponentView() {
   const [componentData, setComponentData] = useState<ComponentData>({ photos: [], neighbors: [], size: 0 });
-  const [componentId, setComponentId] = useState<string>('');
+  const [componentId, setComponentId] = useState<number>(-1);
   const [isLoading, setIsLoading] = useState(true);
   const [subdivisionProposal, setSubdivisionProposal] = useState<SubdivisionProposal | null>(null);
   const [isShowingSubdivisions, setIsShowingSubdivisions] = useState(false);
@@ -41,7 +41,7 @@ export function ComponentView() {
   const [isAssigningPerson, setIsAssigningPerson] = useState(false);
   const [differentPersonIndices, setDifferentPersonIndices] = useState<number[]>([]);
 
-  const loadComponent = async (compId: string) => {
+  const loadComponent = async (compId: number) => {
     try {
       setIsLoading(true);
       setComponentId(compId);
@@ -105,7 +105,7 @@ export function ComponentView() {
     for (let i = 0; i < differentPersonIndices.length; i++) {
       const comp = subdivisionProposal.components[differentPersonIndices[i]];
       for (let j = 0; j < comp.length; j++) {
-        submit_data.push(parseInt(comp[j]));
+        submit_data.push(comp[j]);
       }
     }
     try {
@@ -125,8 +125,8 @@ export function ComponentView() {
   };
 
   useEffect(() => {
-    if (id) {
-      loadComponent(id);
+    if (id && !isNaN(parseInt(id, 10))) {
+      loadComponent(parseInt(id, 10));
     } else {
       loadRandomComponent();
     }

@@ -1,10 +1,10 @@
 const API_BASE = 'http://localhost:8000';
 
-export const getFaceImageUrl = (faceId: string) => `${API_BASE}/face/${faceId}`;
+export const getFaceImageUrl = (faceId: number) => `${API_BASE}/face/${faceId}`;
 
 export interface FaceWithSimilarity {
-    id: string;
-    component_id: string;
+    id: number;
+    component_id: number;
     person_name: string | null;
     similarity?: number;
 }

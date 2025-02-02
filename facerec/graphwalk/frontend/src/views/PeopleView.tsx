@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, RefreshCcw } from 'lucide-react';
+import { Plus, RefreshCcw } from 'lucide-react';
 import { PersonSearchDropdown } from '../components/PersonSearchDropdown';
+import { PersonCard } from '../components/PersonCard';
 
 interface Person {
   id: number;
@@ -146,24 +147,11 @@ export function PeopleView() {
               )}
 
               {people.map((person) => (
-                <motion.div
+                <PersonCard
                   key={person.id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="card bg-base-100 shadow-lg"
-                >
-                  <div className="card-body py-4 flex-row justify-between items-center">
-                    <h2 className="card-title m-0">{person.name}</h2>
-                    <button
-                      onClick={() => handleDeletePerson(person.id)}
-                      className="btn btn-ghost btn-sm text-error"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </motion.div>
+                  person={person}
+                  onDelete={handleDeletePerson}
+                />
               ))}
             </motion.div>
           )}

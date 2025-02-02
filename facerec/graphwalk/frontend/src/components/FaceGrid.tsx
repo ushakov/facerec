@@ -4,7 +4,7 @@ import { FaceWithSimilarity } from '../api/faces';
 
 interface FaceGridProps {
     faces: FaceWithSimilarity[];
-    selectedFaceId?: string;
+    selectedFaceId?: number;
 }
 
 export const FaceGrid: React.FC<FaceGridProps> = ({

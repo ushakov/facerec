@@ -4,7 +4,7 @@ import numpy as np
 import rawpy
 from PIL import Image, ImageOps
 from skimage.transform import rescale
-import models
+from facerec import models
 
 def rescale_to_max(image: np.ndarray, max_size: int) -> np.ndarray:
     h, w = image.shape[:2]

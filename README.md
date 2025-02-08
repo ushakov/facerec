@@ -35,25 +35,25 @@ FaceRec provides a simple command-line interface with several commands:
 
 1. **Discover photos**:
 ```bash
-facerec discover --src-dir /path/to/photos --data-dir /path/to/database
+facerec --data_dir /path/to/database discover /path/to/photos
 ```
 This command will scan the source directory for images and prepare them for processing.
 
 2. **Detect faces**:
 ```bash
-facerec detect --data-dir /path/to/database
+facerec --data_dir /path/to/database detect
 ```
 This will process all discovered images, detect faces, and extract face embeddings.
 
 3. **Cluster faces**:
 ```bash
-facerec cluster --data-dir /path/to/database
+facerec --data_dir /path/to/database cluster
 ```
 This command will analyze all detected faces and group them into clusters based on similarity.
 
 4. **Launch web interface**:
 ```bash
-facerec serve --data-dir /path/to/database
+facerec --data_dir /path/to/database serve
 ```
 This will start a web server on port 8000 where you can explore and organize the face clusters.
 

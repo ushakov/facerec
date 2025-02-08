@@ -98,18 +98,20 @@ export function PersonCard({ person, onDelete }: PersonCardProps) {
                   <div className="loading loading-spinner loading-sm"></div>
                 </div>
               ) : components.length ? (
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {components.map(component => (
-                    <Face
-                      key={component.id}
-                      face={componentToFace(component)}
-                      onClick={() => navigate(`/component/${component.id}`)}
-                      caption={
-                        <div className="text-center text-xs text-base-content/70">
-                          {component.size} faces
-                        </div>
-                      }
-                    />
+                    <div key={component.id} className="w-60 h-72 p-2">
+                      <Face
+                          key={component.id}
+                          face={componentToFace(component)}
+                          onClick={() => navigate(`/components/${component.id}`)}
+                          caption={
+                          <div className="text-center text-xs text-base-content/70">
+                            {component.size} faces
+                          </div>
+                          }
+                      />
+                    </div>
                   ))}
                 </div>
               ) : (

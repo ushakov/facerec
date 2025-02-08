@@ -3,6 +3,7 @@ from datetime import datetime
 import cv2
 from pydantic import BaseModel
 import numpy as np
+from collections import defaultdict
 RAW_EXTENSIONS = {'.nef', '.arw'}
 JPG_EXTENSIONS = {'.jpg', '.jpeg'}
 
@@ -102,10 +103,14 @@ class Faces:
 
 class Context:
     def __init__(self, data_root: Path):
+        print(data_root)
         self.data_root = data_root
         (data_root / 'faces_extr').mkdir(exist_ok=True, parents=True)
         self.images = Images(data_root)
         self.faces = Faces(data_root)
+        self.img2faces = defaultdict(list)
+        for face in self.faces.faces.values():
+            self.img2faces[face.image_id].append(face.id)
 
     def save(self) -> None:
         self.save_images()
@@ -130,3 +135,6 @@ class Context:
         faces = np.array(r)
         faces = faces / np.linalg.norm(faces, axis=1)[:, None]
         return faces, face_ids
+
+    def get_faces_in_image(self, image_id: int) -> list[int]:
+        return self.img2faces[image_id]

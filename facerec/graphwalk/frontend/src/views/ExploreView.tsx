@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FaceGrid } from '../components/FaceGrid';
-import { getRandomFaces, getSimilarFaces, FaceWithSimilarity } from '../api/faces';
+import { getRandomFaces, getSimilarFaces, FaceWithSimilarity, FaceWithContext, getFaceWithContext } from '../api/faces';
 import { useParams } from 'react-router-dom';
 import { Face } from '../components/Face';
+import ImageContext from '../components/ImageContext';
 
 export function ExploreView() {
   const { id } = useParams();
   const [faces, setFaces] = useState<FaceWithSimilarity[]>([]);
-  const [selectedFace, setSelectedFace] = useState<FaceWithSimilarity | null>(null);
+  const [selectedFace, setSelectedFace] = useState<FaceWithContext | null>(null);
   const [similarFaces, setSimilarFaces] = useState<FaceWithSimilarity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -17,7 +18,8 @@ export function ExploreView() {
       setIsLoading(true);
       const response = await getSimilarFaces(faceId);
       setSimilarFaces(response.similar_faces);
-      setSelectedFace(response.query_face);
+      const faceWithContext = await getFaceWithContext(faceId);
+      setSelectedFace(faceWithContext);
     } catch (error) {
       console.error('Failed to load similar faces:', error);
     } finally {
@@ -86,15 +88,14 @@ export function ExploreView() {
               exit={{ opacity: 0 }}
             >
               {selectedFace ? (
-                <>
-                  <div className="flex justify-center mb-8">
-                    <div className="w-72 h-72">
-                      <Face face={selectedFace} />
-                    </div>
+                <div className="flex flex-col items-center">
+                  <div className="w-72 h-72 mb-4">
+                    <Face face={selectedFace} />
                   </div>
-                  <h2 className="text-xl font-semibold text-center mb-4">Similar Faces</h2>
+                  <ImageContext face={selectedFace} />
+                  <h2 className="text-xl font-semibold text-center my-4">Similar Faces</h2>
                   <FaceGrid faces={similarFaces} selectedFaceId={selectedFace.id} />
-                </>
+                </div>
               ) : (
                 <FaceGrid faces={faces} />
               )}

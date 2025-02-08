@@ -3,7 +3,7 @@ import json
 from dataclasses import dataclass
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 import numpy as np
 import os
@@ -16,14 +16,16 @@ from heapq import nsmallest
 from itertools import product
 from rapidfuzz import process
 from importlib.resources import files
+from io import BytesIO
+from PIL import Image
 
-from facerec import models
+from facerec import models, images
 
 
 @dataclass
 class Settings:
     static_root = files('facerec')
-    subgraph_dir: Path = Path(".")
+    subgraph_dir: Path = Path("/home/ushakov/facerec-d/d")
 
 settings = Settings()
 
@@ -45,7 +47,7 @@ app.add_middleware(
 FACES_DIR = None
 faces = None
 face_ids = None
-face_ctx = None
+face_ctx: models.Context = None
 
 components = None
 face_to_component = None
@@ -92,6 +94,14 @@ class FaceWithSimilarity(BaseModel):
     person_name: str | None
     similarity: float
 
+
+class FaceWithContext(FaceWithSimilarity):
+    face_data: models.Face
+    image_path: str
+    image_date: str | None
+    other_faces: list[FaceWithSimilarity]
+
+
 class Person(BaseModel):
     id: int
     name: str
@@ -112,11 +122,13 @@ def save_component_people():
     with open(COMPONENT_PEOPLE_FILE, 'w') as f:
         json.dump({k: v for k, v in component_people.items()}, f)
 
+
 @app.get("/random-faces")
 async def get_random_faces(count: int = 20) -> List[FaceWithSimilarity]:
     """Get random faces with component and person information"""
     indices = random.sample(range(len(face_ids)), min(count, len(face_ids)))
     return [create_face_with_similarity(face_ids[i]) for i in indices]
+
 
 class SimilarFacesResponse(BaseModel):
     query_face: FaceWithSimilarity
@@ -131,11 +143,33 @@ def create_face_with_similarity(face_id: int, similarity: float = 0.0) -> FaceWi
         person_name = people[person_id].name
 
     return FaceWithSimilarity(
-        id=str(face_id),
+        id=face_id,
         similarity=similarity,
         component_id=component_id,
         person_name=person_name
     )
+
+
+def create_face_with_context(face_id: int) -> FaceWithContext:
+    face_with_similarity = create_face_with_similarity(face_id)
+
+    image_id = face_ctx.faces.faces[face_id].image_id
+    image_path = face_ctx.images.images[image_id].best_filename
+    image_date = face_ctx.images.images[image_id].capture_date
+    if image_date is not None:
+        image_date = image_date.strftime("%Y-%m-%d")
+
+    other_faces = face_ctx.get_faces_in_image(image_id)
+    other_faces = [create_face_with_similarity(i) for i in other_faces if i != face_id]
+
+    return FaceWithContext(
+        **face_with_similarity.model_dump(),
+        face_data=face_ctx.faces.faces[face_id],
+        image_path=image_path,
+        image_date=image_date,
+        other_faces=other_faces
+    )
+
 
 @app.get("/similar-faces/{face_id}", response_model=SimilarFacesResponse)
 async def get_similar_faces(face_id: int, count: int = 20, per_bucket: int = 5) -> SimilarFacesResponse:
@@ -176,6 +210,13 @@ async def get_similar_faces(face_id: int, count: int = 20, per_bucket: int = 5) 
         print(f"Face ID not found: {face_id}: {e}")
         raise HTTPException(status_code=404, detail="Face ID not found")
 
+
+@app.get("/face_with_context/{face_id}")
+async def get_face_with_context(face_id: int, response_model=FaceWithContext):
+    """Get face with context"""
+    return create_face_with_context(face_id)
+
+
 @app.get("/face/{face_id}")
 async def get_face_image(face_id: str):
     """Serve face image by ID"""
@@ -183,6 +224,32 @@ async def get_face_image(face_id: str):
     if not image_path.exists():
         raise HTTPException(status_code=404, detail="Image not found")
     return FileResponse(image_path)
+
+@app.get("/image/{image_id}")
+async def get_image(image_id: str):
+    """Serve image by ID"""
+    try:
+        image_id = int(image_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid image ID")
+    if image_id not in face_ctx.images.images:
+        print(f"Image ID not found in database: {image_id}")
+        raise HTTPException(status_code=404, detail="Image not found")
+    image_path = face_ctx.images.images[image_id].best_filename
+    if not Path(image_path).exists():
+        print(f"Image path not found: {image_path}")
+        raise HTTPException(status_code=404, detail="Image not found")
+    # Use images.prepare_image with reasonable max size (1024)
+    prepared = images.get_image(Path(image_path))
+    prepared = images.prepare_image(prepared, max_size=1024)
+    print(f"Serving prepared image: {image_path} resized to max_size 1024")
+    # Convert the numpy array to a JPEG image using PIL
+    img = Image.fromarray(prepared)
+    buf = BytesIO()
+    img.save(buf, format="JPEG")
+    buf.seek(0)
+    content = buf.getvalue()
+    return Response(content=content, media_type="image/jpeg")
 
 @app.get("/random_component")
 async def get_random_component() -> int:

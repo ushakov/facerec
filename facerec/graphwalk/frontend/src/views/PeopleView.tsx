@@ -88,7 +88,7 @@ export function PeopleView() {
       </header>
 
       <main className="container mx-auto py-8">
-        <div className="mb-8 max-w-xl mx-auto">
+        <div className="mb-8 max-w-3xl mx-auto">
           <PersonSearchDropdown
             onSelect={(person) => console.log('Selected:', person)}
             placeholder="Search people..."
@@ -113,7 +113,7 @@ export function PeopleView() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="grid gap-4 max-w-xl mx-auto"
+              className="grid gap-4 max-w-3xl mx-auto"
             >
               {isCreating && (
                 <motion.form

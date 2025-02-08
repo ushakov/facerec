@@ -20,6 +20,12 @@ export const Face: React.FC<FaceProps> = ({
     const navigate = useNavigate();
     const componentDisplay = face.person_name || face.component_id;
 
+    if (!onClick) {
+        onClick = () => {
+            navigate(`/faces/${face.id}`);
+        }
+    }
+
     const onNameClick = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
         if (face.component_id) {

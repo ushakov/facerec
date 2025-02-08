@@ -1,5 +1,10 @@
 const API_BASE = 'http://localhost:8000';
 
+export interface FaceData {
+  image_id: string; // used for fetching context image via /image/{image_id}
+  // add other properties if needed
+}
+
 export const getFaceImageUrl = (faceId: number) => `${API_BASE}/face/${faceId}`;
 
 export interface FaceWithSimilarity {
@@ -7,6 +12,13 @@ export interface FaceWithSimilarity {
     component_id: number;
     person_name: string | null;
     similarity?: number;
+}
+
+export interface FaceWithContext extends FaceWithSimilarity {
+    face_data: FaceData;
+    image_path: string;
+    image_date: string | null;
+    other_faces: FaceWithSimilarity[];
 }
 
 export const getRandomFaces = async (count: number = 20): Promise<FaceWithSimilarity[]> => {
@@ -35,5 +47,13 @@ export interface FacePairComparison {
 export const compareComponents = async (comp1Id: number, comp2Id: number): Promise<FacePairComparison[]> => {
   const response = await fetch(`${API_BASE}/compare-components/${comp1Id}/${comp2Id}`);
   if (!response.ok) throw new Error('Failed to compare components');
+  return response.json();
+};
+
+export const getContextImageUrl = (imageId: string) => `${API_BASE}/image/${imageId}`;
+
+export const getFaceWithContext = async (faceId: string): Promise<FaceWithContext> => {
+  const response = await fetch(`${API_BASE}/face_with_context/${faceId}`);
+  if (!response.ok) throw new Error('Failed to fetch face with context');
   return response.json();
 };

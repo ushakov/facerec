@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FaceGrid } from '../components/FaceGrid';
-import { getRandomFaces, getSimilarFaces, FaceWithSimilarity, FaceWithContext, getFaceWithContext } from '../api/faces';
+import { getRandomFaces, getSimilarFaces, FaceWithSimilarity } from '../api/faces';
 import { useParams } from 'react-router-dom';
 import { Face } from '../components/Face';
 import ImageContext from '../components/ImageContext';

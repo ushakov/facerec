@@ -8,3 +8,4 @@ __pycache__/
 *.db
 v1/
 .envrc
+converted/

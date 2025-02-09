@@ -25,7 +25,7 @@ from facerec import models, images
 @dataclass
 class Settings:
     static_root = files('facerec')
-    subgraph_dir: Path = Path("/home/ushakov/facerec-d/d")
+    subgraph_dir: Path = Path(".")
 
 settings = Settings()
 
@@ -71,7 +71,7 @@ async def load_data():
 
     with open(settings.subgraph_dir / f"louvain_communities.json", 'r') as f:
         components = json.load(f)
-    face_to_component = {face_id: i for i, component in enumerate(components) for face_id in component}
+    face_to_component = {int(face_id): i for i, component in enumerate(components) for face_id in component}
 
     PEOPLE_FILE = settings.subgraph_dir / "people.json"
     COMPONENT_PEOPLE_FILE = settings.subgraph_dir / "component_people.json"
@@ -476,17 +476,15 @@ async def submit_subdivision(comp_id: int, remove_indices: List[int]):
     src_comp = [i for i in components[comp_id] if i not in remove_indices]
     components[comp_id] = src_comp
     components.append(list(remove_indices))
+    new_component_id = len(components)-1
+    for face in remove_indices:
+        face_to_component[face] = new_component_id
     with open(settings.subgraph_dir / f"louvain_communities.json", 'w') as f:
         json.dump(components, f, indent=4)
-    return {"status": "success", "new_component": len(components)-1}
+    return {"status": "success", "new_component": new_component_id}
 
 # Serve index.html as a last resort (on all other paths)
 @app.get("/{path:path}")
 async def serve_index(path: str):
     return FileResponse(str(settings.static_root / "graphwalk/frontend/dist/index.html"))
 
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)

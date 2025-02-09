@@ -69,7 +69,6 @@ class Images:
             image.id = self.next_id
             self.next_id += 1
         self.images[image.id] = image
-        self.write()
 
 
 class Faces:

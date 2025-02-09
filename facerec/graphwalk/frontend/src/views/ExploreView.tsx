@@ -9,7 +9,7 @@ import ImageContext from '../components/ImageContext';
 export function ExploreView() {
   const { id } = useParams();
   const [faces, setFaces] = useState<FaceWithSimilarity[]>([]);
-  const [selectedFace, setSelectedFace] = useState<FaceWithContext | null>(null);
+  const [selectedFace, setSelectedFace] = useState<FaceWithSimilarity | null>(null);
   const [similarFaces, setSimilarFaces] = useState<FaceWithSimilarity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -18,8 +18,7 @@ export function ExploreView() {
       setIsLoading(true);
       const response = await getSimilarFaces(faceId);
       setSimilarFaces(response.similar_faces);
-      const faceWithContext = await getFaceWithContext(faceId);
-      setSelectedFace(faceWithContext);
+      setSelectedFace(response.query_face);
     } catch (error) {
       console.error('Failed to load similar faces:', error);
     } finally {
@@ -92,7 +91,7 @@ export function ExploreView() {
                   <div className="w-72 h-72 mb-4">
                     <Face face={selectedFace} />
                   </div>
-                  <ImageContext face={selectedFace} />
+                  <ImageContext faceId={selectedFace.id} />
                   <h2 className="text-xl font-semibold text-center my-4">Similar Faces</h2>
                   <FaceGrid faces={similarFaces} selectedFaceId={selectedFace.id} />
                 </div>

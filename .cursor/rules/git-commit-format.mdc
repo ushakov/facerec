@@ -1,0 +1,18 @@
+---
+description: how to format git commits
+globs: 
+---
+Prefer short, one-line commit messages, cf. previous history:
+
+    e6dbb1f move context loading to ImageContext, fix bug in subdivision
+    df46c5f add context photo and other faces; fix some bugs
+    e1a29ce add MIT license
+    b71434a change fuzzy lib
+    fabb5a2 refactor people view and bring numeric ids across the board
+    4859d1a restore click on name; fix size
+    ce5de41 update componentview
+    913496c use common data type in more places
+    87efb15 start unification of face data
+    3508528 straighten saving/loading people; add person name to similar photos
+    abdb8e5 update readme
+    5d1f397 fix graph loading and component subdividing

@@ -1,166 +1,55 @@
 # Face Recognition System
 
-## Architecture
+This project implements a face recognition pipeline using simple, file-based storage.
 
-### Data Storage
-- SQLite database (`discovered_files.db`) for metadata and relationships
-- LanceDB for vector embeddings storage and similarity search
-- GEXF files for face similarity graphs
+## Overview
 
-### Core Components
+The system performs four main tasks:
 
-#### Image Management
-- Tracks both RAW (`.nef`, `.arw`) and JPEG images
-- Associates multiple files with single logical image
-- Records capture dates and discovery timestamps
+1. **Discover**: Scans directories for RAW (.nef, .arw) and JPEG images, extracts metadata (e.g., capture date from EXIF), and stores records in JSON Lines files (images.jsonl, faces.jsonl).
 
-#### Face Detection & Analysis
-- Uses InsightFace for face detection and embedding generation
-- CPU execution provider for compatibility
-- 512-dimensional face embeddings
-- Stores face bounding boxes and metadata
+2. **Detect**: Processes images to detect faces and compute 512-dimensional embeddings using InsightFace.
 
-#### Similarity Analysis
-- Cosine similarity-based face comparison
-- Graph-based clustering (NetworkX)
-- Distance threshold: 0.4 for edge creation
-- Community detection using Louvain method
+3. **Cluster**: Builds a cosine similarity graph (threshold: 0.4) from face embeddings and applies Louvain community detection. The graph is saved as a GEXF file with communities stored in JSON.
 
-### Web Interface (GraphWalk)
+4. **Serve**: Runs a FastAPI (GraphWalk) backend to explore face clusters and perform similarity searches.
 
-#### Backend (FastAPI)
-- Face similarity search with bucketed sampling
-- Component exploration and comparison
-- People management with fuzzy search
-- Image serving for detected faces
-- CORS support for local development
+## Data Storage
 
-#### Frontend (React + TypeScript)
-- Modern stack: Vite, React, TypeScript, Tailwind CSS
-- Component-based architecture:
-  - Views:
-    - `ExploreView`: Random face exploration
-    - `ComponentView`: Cluster visualization
-    - `CompareView`: Side-by-side cluster comparison
-    - `PeopleView`: Person management interface
-  - Components:
-    - `Face`: Face display with metadata
-    - `FaceGrid`: Grid layout for face collections
-    - `PersonSearchDropdown`: Autocomplete person search
-    - `Layout`: Common page structure
-  - API Layer:
-    - `faces.ts`: Backend API client implementation
+- **Metadata**: JSONL files in a configurable data directory (e.g., images.jsonl, faces.jsonl).
+- **Face Images**: Extracted face crops are saved in a dedicated folder (faces_extr).
+- **Similarity Graphs**: Stored in GEXF format, with community detection results in a JSON file.
 
-#### API Features
-- Random face sampling
-- Similar face discovery with distance bucketing
-- Component navigation and comparison
-- Person management with multi-strategy search:
-  - Prefix matching
-  - Initials matching
-  - Fuzzy name search
+## Key Files
 
-### Data Models
+- **models.py**: Defines data models and file-based storage classes.
+- **discover_dir.py**: Handles image discovery and metadata extraction.
+- **detect_faces.py**: Implements face detection and embedding extraction.
+- **cluster_faces.py**: Constructs the similarity graph and clusters faces.
+- **facerec.py**: Main CLI entry point to run discovery, detection, clustering, and serving.
+- **images.py**: Contains image processing utilities (e.g., thumbnail generation, image normalization).
+- **graphwalk/backend/**: Contains the FastAPI backend for the web interface.
+- **graphwalk/frontend/**: Contains the web frontend code.
 
-#### Database Schema
-- `images`: Core image metadata
-- `files`: Physical file locations
-- `face_detection_runs`: Detection job tracking
-- `faces`: Detected face regions and metadata
+### Frontend
 
-#### Vector Store
-- LanceDB table schema:
-  - `vector`: float32[512] face embeddings
-  - `face_id`: int64 reference to SQL faces table
+Tech Stack Used: React, TypeScript, Tailwind CSS, DaisyUI, Framer Motion, React Router, Vite.
 
-### Key Files
-- `detect_faces.py`: Face detection pipeline
-- `build_graph.py`: Similarity graph construction
-- `models.py`: Data models and DB interface
-- `communty_analysis.py`: Face clustering logic
+1. **Core Views**:
+   - `ExploreView`: Main interface for browsing and exploring faces, with similarity search
+   - `ComponentView`: Displays face clusters and community detection results
+   - `PeopleView`: Manages labeled individuals and their associated faces
 
-### Processing Pipeline
-1. Image discovery and indexing
-2. Face detection and embedding extraction
-3. Similarity graph construction
-4. Community detection for face clustering
+2. **Key Components**:
+   - `Face`: Renders individual face crops with metadata and interactions
+   - `FaceGrid`: Displays collections of faces in a responsive grid layout
+   - `PersonCard`: Shows person details with their associated faces
+   - `ImageContext`: Provides the original image context for detected faces
+   - `PersonSearchDropdown`: Enables quick person search and selection
 
-## Major APIs
+3. **API Integration**:
+   - API calls are centralized in the `api` directory
+   - Handles face fetching, similarity searches, and person management
+   - Maintains type safety with TypeScript interfaces matching backend models
 
-### Face Detection (`detect_faces.py`)
-- `FaceAnalysis.get()`: InsightFace detection and embedding
-- `process_image()`: Face detection and metadata extraction
-- `Face` model: Stores bbox, landmarks, embedding (512d)
-
-### Graph Construction (`build_graph.py`)
-- `FaceGraph.build_graph()`: Constructs similarity network
-  - Input: Face embeddings matrix
-  - Output: NetworkX graph with distance weights
-
-### Community Analysis (`communty_analysis.py`)
-- Louvain community detection
-- Component filtering and analysis
-- Graph metrics calculation
-
-### REST API (`graphwalk/backend/main.py`)
-- Face Endpoints:
-  - `GET /random-faces`: Sample random face IDs
-  - `GET /similar-faces/{face_id}`: Find similar faces with bucketing
-  - `GET /face/{face_id}`: Serve face image
-- Component Endpoints:
-  - `GET /random_component`: Get random cluster
-  - `GET /component/{comp_id}`: Get cluster details and neighbors
-  - `GET /compare-components/{comp_id1}/{comp_id2}`: Find similar faces between clusters
-- Person Management:
-  - `POST /people`: Create person
-  - `GET /people`: List all people
-  - `GET /people/search`: Multi-strategy name search
-
-### Database Models (`models.py`)
-- Table Operations:
-  - `Image`: `best_filename`, `capture_date`
-  - `File`: `filename`, `image_id`
-  - `FaceDetectionRun`: Detection metadata
-  - `Face`: Face region and embedding data
-
-## Implementation Details
-
-### Frontend Architecture
-
-#### View Components
-- `ExploreView`:
-  - Random face sampling and exploration
-  - Similar face discovery with distance bucketing
-- `ComponentView`:
-  - Cluster visualization and navigation
-  - Neighbor cluster exploration
-- `CompareView`:
-  - Side-by-side cluster comparison
-  - Similar face pair identification
-- `PeopleView`:
-  - Person management and tagging
-  - Multi-strategy name search interface
-
-#### Reusable Components
-- `Face`:
-  - Face image display
-  - Metadata overlay
-  - Click handlers for navigation
-- `FaceGrid`:
-  - Responsive grid layout
-  - Uniform face card presentation
-- `PersonSearchDropdown`:
-  - Autocomplete search interface
-  - Multi-strategy name matching
-- `Layout`:
-  - Common navigation structure
-  - Consistent page layout
-
-#### API Integration
-- TypeScript interfaces for type safety
-- Centralized API client in `faces.ts`
-- Error handling and response typing
-- Endpoint abstraction for:
-  - Face operations
-  - Component comparison
-  - Person management
+The application uses React Router for navigation and Framer Motion for smooth transitions between views. The UI is built with Tailwind CSS and DaisyUI components, providing a modern and responsive interface for exploring the face recognition system.

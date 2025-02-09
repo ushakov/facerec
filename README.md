@@ -20,7 +20,7 @@ pipx install git+https://github.com/ushakov/facerec.git
 
 ## Dependencies
 
-FaceRec requires Python 3.10 or later and uses the following main dependencies:
+FaceRec requires Python 3.10 or later and uses the following main dependencies (installed automatically by `pipx`):
 - insightface
 - numpy
 - networkx
@@ -63,9 +63,9 @@ The web interface provides several views to explore and organize your face colle
 
 1. **Face Explorer** (`/faces`)
    - Browse random faces from your collection
-   - Click on any face to see similar faces
+   - Click on any face to see similar faces along with the context image
    - View similarity scores between faces
-   - Navigate through face clusters
+   - Navigate to different face clusters
 
 2. **Components** (`/components`)
    - View and manage face clusters
@@ -73,10 +73,8 @@ The web interface provides several views to explore and organize your face colle
    - Propose and manage cluster subdivisions
    - See component sizes and relationships
 
-4. **People Management** (`/people`)
-   - Create and manage people profiles
+3. **People Management** (`/people`)
    - Search through known people
-   - Associate people with face clusters
    - Organize your photo collection by person
 
 ### Navigation and Common Actions
@@ -105,8 +103,8 @@ The web interface provides several views to explore and organize your face colle
 ## Data Storage
 
 FaceRec stores its database and processed faces in the specified data directory with the following structure:
-- `images.json`: Database of discovered images
-- `faces.json`: Database of detected faces
+- `images.jsonl`: Database of discovered images
+- `faces.jsonl`: Database of detected faces
 - `faces_extr/`: Directory containing extracted face thumbnails
 - `face_similarity.gexf`: Face similarity graph
 - `louvain_communities.json`: Computed face clusters

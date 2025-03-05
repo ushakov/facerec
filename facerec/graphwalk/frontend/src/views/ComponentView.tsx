@@ -5,7 +5,7 @@ import { RefreshCcw, X, User, UserPlus, GitBranch } from 'lucide-react';
 import { FaceGrid } from '../components/FaceGrid';
 import { Face } from '../components/Face';
 import { PersonSearchOrAdd } from '../components/PersonSearchOrAdd';
-import { FaceWithSimilarity } from '../api/faces';
+import { FaceWithSimilarity, API_BASE } from '../api/faces';
 
 interface Neighbor {
   comp_id: number;
@@ -45,7 +45,7 @@ export function ComponentView() {
     try {
       setIsLoading(true);
       setComponentId(compId);
-      const response = await fetch(`http://localhost:8000/component/${compId}`);
+      const response = await fetch(`${API_BASE}/component/${compId}`);
       const data = await response.json();
       setComponentData(data);
     } catch (error) {
@@ -58,7 +58,7 @@ export function ComponentView() {
   const loadRandomComponent = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:8000/random_component');
+      const response = await fetch(`${API_BASE}/random_component`);
       const compId = await response.text();
       navigate(`/components/${compId}`);
     } catch (error) {
@@ -74,7 +74,7 @@ export function ComponentView() {
 
   const handlePersonSelect = async (person: Person) => {
     try {
-      await fetch(`http://localhost:8000/component/${componentId}/person`, {
+      await fetch(`${API_BASE}/component/${componentId}/person`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ person_id: person.id }),
@@ -88,7 +88,7 @@ export function ComponentView() {
 
   const proposeSubdivision = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/propose_subdivision/${componentId}`);
+      const response = await fetch(`${API_BASE}/propose_subdivision/${componentId}`);
       const data = await response.json();
       setSubdivisionProposal(data);
       setIsShowingSubdivisions(true);
@@ -109,7 +109,7 @@ export function ComponentView() {
       }
     }
     try {
-      const response = await fetch(`http://localhost:8000/component/${componentId}/subdivide`, {
+      const response = await fetch(`${API_BASE}/component/${componentId}/subdivide`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submit_data),

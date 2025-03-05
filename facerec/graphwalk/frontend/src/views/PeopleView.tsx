@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, RefreshCcw } from 'lucide-react';
 import { PersonSearchDropdown } from '../components/PersonSearchDropdown';
 import { PersonCard } from '../components/PersonCard';
+import { API_BASE } from '../api/faces';
 
 interface Person {
   id: number;
@@ -18,7 +19,7 @@ export function PeopleView() {
   const loadPeople = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:8000/people');
+      const response = await fetch(`${API_BASE}/people`);
       const data = await response.json();
       setPeople(data);
     } catch (error) {
@@ -37,7 +38,7 @@ export function PeopleView() {
     if (!newPersonName.trim()) return;
 
     try {
-      const response = await fetch('http://localhost:8000/people', {
+      const response = await fetch(`${API_BASE}/people`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newPersonName.trim() })
@@ -53,7 +54,7 @@ export function PeopleView() {
 
   const handleDeletePerson = async (id: number) => {
     try {
-      await fetch(`http://localhost:8000/people/${id}`, { method: 'DELETE' });
+      await fetch(`${API_BASE}/people/${id}`, { method: 'DELETE' });
       setPeople(people.filter(p => p.id !== id));
     } catch (error) {
       console.error('Failed to delete person:', error);

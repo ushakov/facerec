@@ -18,11 +18,11 @@ class FaceRec:
         from facerec.cluster_faces import cluster_faces
         cluster_faces(self.data_dir)
 
-    def serve(self):
+    def serve(self, port: int = 8000, host: str = '127.0.0.1'):
         import uvicorn
         import facerec.graphwalk.backend.main as main
         main.settings.subgraph_dir = self.data_dir
-        uvicorn.run(main.app, port=8000)
+        uvicorn.run(main.app, port=port, host=host)
 
 
 def run():

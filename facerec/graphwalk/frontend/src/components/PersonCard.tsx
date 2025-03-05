@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Face } from './Face';
-import { FaceWithSimilarity } from '../api/faces';
+import { FaceWithSimilarity, API_BASE } from '../api/faces';
 
 interface Person {
   id: number;
@@ -32,7 +32,7 @@ export function PersonCard({ person, onDelete }: PersonCardProps) {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:8000/people/${person.id}/components`);
+      const response = await fetch(`${API_BASE}/people/${person.id}/components`);
       const data = await response.json();
       setComponents(data.components);
     } catch (error) {

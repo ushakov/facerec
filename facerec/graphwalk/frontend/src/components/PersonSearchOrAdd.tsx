@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_BASE } from '../api/faces';
 
 interface Person {
   id: number;
@@ -33,7 +34,7 @@ export function PersonSearchOrAdd({ onSelect, onClose }: PersonSearchOrAddProps)
 
       try {
         setIsLoading(true);
-        const response = await fetch(`http://localhost:8000/people/search?query=${encodeURIComponent(query)}`);
+        const response = await fetch(`${API_BASE}/people/search?query=${encodeURIComponent(query)}`);
         const data = await response.json();
         setResults(data);
       } catch (error) {
@@ -52,7 +53,7 @@ export function PersonSearchOrAdd({ onSelect, onClose }: PersonSearchOrAddProps)
 
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:8000/people', {
+      const response = await fetch(`${API_BASE}/people`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: query }),

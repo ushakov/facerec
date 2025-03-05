@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8000';
+const API_BASE = process.env.NODE_ENV === 'production' ? '//' : 'http://localhost:8000';
 
 export interface FaceData {
   image_id: string; // used for fetching context image via /image/{image_id}

@@ -58,6 +58,8 @@ def load_graph():
     global graph
     if graph is None:
         graph = nx.read_gexf(str(settings.subgraph_dir / "face_similarity.gexf"))
+        # Convert node IDs to integers
+        graph = nx.relabel_nodes(graph, lambda x: int(x))
 
 
 @app.on_event("startup")
@@ -70,7 +72,9 @@ async def load_data():
     face_to_component = {}
 
     with open(settings.subgraph_dir / f"louvain_communities.json", 'r') as f:
-        components = json.load(f)
+        data = json.load(f)
+        # Convert all face IDs to integers when loading
+        components = [[int(face_id) for face_id in component] for component in data]
     face_to_component = {int(face_id): i for i, component in enumerate(components) for face_id in component}
 
     PEOPLE_FILE = settings.subgraph_dir / "people.json"
@@ -264,14 +268,14 @@ async def get_component(comp_id: int):
     photo_sample = random.sample(components[comp_id], min(20, len(components[comp_id])))
     neighbors = []
     if subgraph is not None:
-        neighbors = list(subgraph.neighbors(str(comp_id)))
-        neighbors = sorted(neighbors, key=lambda x: subgraph.edges[str(comp_id), x]['distance'])
+        neighbors = list(subgraph.neighbors(comp_id))
+        neighbors = sorted(neighbors, key=lambda x: subgraph.edges[comp_id, x]['distance'])
         neighbors = [
             {
                 "comp_id": n,
-                "size": len(components[int(n)]),
-                "sample_face_id": str(random.choice(components[int(n)])),
-                "distance": subgraph.edges[str(comp_id), n]['distance']
+                "size": len(components[n]),
+                "sample_face_id": random.choice(components[n]),
+                "distance": subgraph.edges[comp_id, n]['distance']
             }
             for n in neighbors
         ]
@@ -289,15 +293,15 @@ async def get_component(comp_id: int):
     }
 
 @app.get("/compare-components/{comp_id1}/{comp_id2}")
-async def compare_components(comp_id1: str, comp_id2: str, num_pairs: int = 5):
+async def compare_components(comp_id1: int, comp_id2: int, num_pairs: int = 5):
     """Compare two components by finding most similar face pairs between them"""
     # Get faces from both components
-    faces1 = components[int(comp_id1)]
-    faces2 = components[int(comp_id2)]
+    faces1 = components[comp_id1]
+    faces2 = components[comp_id2]
 
     # Get embeddings for faces in both components
-    indices1 = [list(face_ids).index(int(face_id)) for face_id in faces1]
-    indices2 = [list(face_ids).index(int(face_id)) for face_id in faces2]
+    indices1 = [list(face_ids).index(face_id) for face_id in faces1]
+    indices2 = [list(face_ids).index(face_id) for face_id in faces2]
 
     vecs1 = faces[indices1]
     vecs2 = faces[indices2]
@@ -309,7 +313,7 @@ async def compare_components(comp_id1: str, comp_id2: str, num_pairs: int = 5):
     pairs = []
     for i, j in product(range(len(faces1)), range(len(faces2))):
         dist = float(distances[i][j])
-        pairs.append((dist, str(faces1[i]), str(faces2[j])))
+        pairs.append((dist, faces1[i], faces2[j]))
 
     top_pairs = nsmallest(num_pairs, pairs)
 
@@ -448,7 +452,7 @@ async def get_person_components(person_id: int):
             {
                 "id": comp_id,
                 "size": len(components[comp_id]),
-                "sample_face_id": str(random.choice(components[comp_id]))
+                "sample_face_id": random.choice(components[comp_id])
             }
             for comp_id in assigned_components
         ]
@@ -459,7 +463,7 @@ async def get_person_components(person_id: int):
 async def propose_subdivision(comp_id: int):
     """Propose subdivision of a component"""
     load_graph()
-    subgraph = graph.subgraph([str(i) for i in components[comp_id]])
+    subgraph = graph.subgraph([i for i in components[comp_id]])
     subcomponents = nx.community.louvain_communities(subgraph)
     ret = []
     for subcomp in subcomponents:
@@ -472,7 +476,7 @@ async def propose_subdivision(comp_id: int):
 async def submit_subdivision(comp_id: int, remove_indices: List[int]):
     """Handle subdivision of a component based on user feedback"""
     print(f"submitting subdivision for component {comp_id} with indices {remove_indices}")
-    remove_indices = set([str(i) for i in remove_indices])
+    remove_indices = set(remove_indices)
     src_comp = [i for i in components[comp_id] if i not in remove_indices]
     components[comp_id] = src_comp
     components.append(list(remove_indices))

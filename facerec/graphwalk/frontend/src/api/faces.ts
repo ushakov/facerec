@@ -1,7 +1,7 @@
 export const API_BASE = import.meta.env.PROD ? '' : 'http://localhost:8000';
 
 export interface FaceData {
-  image_id: string; // used for fetching context image via /image/{image_id}
+  image_id: number; // used for fetching context image via /image/{image_id}
   // add other properties if needed
 }
 

@@ -50,10 +50,36 @@ export const compareComponents = async (comp1Id: number, comp2Id: number): Promi
   return response.json();
 };
 
-export const getContextImageUrl = (imageId: string) => `${API_BASE}/image/${imageId}`;
+export const getContextImageUrl = (imageId?: number) => `${API_BASE}/image/${imageId || ''}`;
 
 export const getFaceWithContext = async (faceId: string): Promise<FaceWithContext> => {
   const response = await fetch(`${API_BASE}/face_with_context/${faceId}`);
   if (!response.ok) throw new Error('Failed to fetch face with context');
   return response.json();
+};
+
+export interface TimelineFace {
+    face_id: number;
+    image_date: string | null;
+    image_path: string;
+    component_id: number;
+}
+
+export interface TimelineResponse {
+    faces: TimelineFace[];
+    total_count: number;
+    has_more: boolean;
+}
+
+export const getPersonTimeline = async (
+    personId: number,
+    page: number = 1,
+    pageSize: number = 20,
+    sortOrder: 'asc' | 'desc' = 'desc'
+): Promise<TimelineResponse> => {
+    const response = await fetch(
+        `${API_BASE}/people/${personId}/timeline?page=${page}&page_size=${pageSize}&sort_order=${sortOrder}`
+    );
+    if (!response.ok) throw new Error('Failed to fetch person timeline');
+    return response.json();
 };

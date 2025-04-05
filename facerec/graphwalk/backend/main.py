@@ -487,6 +487,70 @@ async def submit_subdivision(comp_id: int, remove_indices: List[int]):
         json.dump(components, f, indent=4)
     return {"status": "success", "new_component": new_component_id}
 
+class TimelineFace(BaseModel):
+    face_id: int
+    image_date: str | None
+    image_path: str
+    component_id: int
+
+@app.get("/people/{person_id}/timeline")
+async def get_person_timeline(
+    person_id: int,
+    page: int = 1,
+    page_size: int = 20,
+    sort_order: str = "desc"
+):
+    """Get chronological timeline of faces for a person"""
+    person_id = int(person_id)
+    if person_id not in people:
+        raise HTTPException(status_code=404, detail="Person not found")
+
+    # Get all components assigned to this person
+    assigned_components = [
+        comp_id for comp_id, pid in component_people.items()
+        if pid == person_id
+    ]
+
+    # Collect all faces from these components with their dates
+    faces_with_dates = []
+    for comp_id in assigned_components:
+        for face_id in components[comp_id]:
+            # Get image date for this face
+            print(f"face_id: {face_id}={type(face_id)}")
+            image_id = face_ctx.faces.faces[face_id].image_id
+            image_path = face_ctx.images.images[image_id].best_filename
+            image_date = face_ctx.images.images[image_id].capture_date
+
+            if image_date is not None:
+                image_date = image_date.strftime("%Y-%m-%d")
+
+            faces_with_dates.append(
+                TimelineFace(
+                    face_id=face_id,
+                    image_date=image_date,
+                    image_path=image_path,
+                    component_id=comp_id
+                )
+            )
+
+    # Sort faces by date
+    faces_with_dates.sort(
+        key=lambda x: (x.image_date is None, x.image_date),
+        reverse=(sort_order == "desc")
+    )
+
+    # Calculate pagination
+    total_faces = len(faces_with_dates)
+    total_pages = math.ceil(total_faces / page_size)
+    start_idx = (page - 1) * page_size
+    end_idx = start_idx + page_size
+
+    return {
+        "faces": faces_with_dates[start_idx:end_idx],
+        "total_count": total_faces,
+        "has_more": page < total_pages
+    }
+
 # Serve index.html as a last resort (on all other paths)
 @app.get("/{path:path}")
 async def serve_index(path: str):

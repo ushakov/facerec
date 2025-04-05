@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Face } from './Face';
 import { FaceWithSimilarity, API_BASE } from '../api/faces';
 
@@ -83,6 +83,12 @@ export function PersonCard({ person, onDelete }: PersonCardProps) {
           >
             <Trash2 className="w-4 h-4" />
           </button>
+          <Link
+            to={`/people/${person.id}/timeline`}
+            className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Timeline
+          </Link>
         </div>
 
         <AnimatePresence>

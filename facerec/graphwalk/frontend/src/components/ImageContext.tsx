@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Face } from './Face';
 import { getContextImageUrl, FaceWithSimilarity, FaceWithContext, getFaceWithContext } from '../api/faces';
+import { formatDate } from '../utils/dates';
 
 // Create a type alias extending FaceWithContext to include the optional context_faces property
 export type ExtendedFaceWithContext = FaceWithContext & { context_faces?: FaceWithSimilarity[] };
@@ -42,13 +43,13 @@ const ImageContext: React.FC<ImageContextProps> = ({ faceId }) => {
       <div className="flex flex-col items-center">
         <div className="w-full flex flex-col items-center">
           <img
-            src={getContextImageUrl(face?.face_data.image_id || '')}
+            src={getContextImageUrl(face?.face_data.image_id)}
             alt="Context"
             loading="lazy"
             className="mb-2"
           />
           <div>{face?.image_path}</div>
-          {face?.image_date && <div>{face?.image_date}</div>}
+          {face?.image_date && <div>{formatDate(face?.image_date)}</div>}
         </div>
       </div>
 

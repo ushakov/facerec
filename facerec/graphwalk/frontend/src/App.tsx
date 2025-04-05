@@ -5,6 +5,7 @@ import { ExploreView } from './views/ExploreView';
 import { ComponentView } from './views/ComponentView';
 import { CompareView } from './views/CompareView';
 import { PeopleView } from './views/PeopleView';
+import { TimelineView } from './views/TimelineView';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/components/:id" element={<ComponentView />} />
           <Route path="/compare/:id1/:id2" element={<CompareView />} />
           <Route path="/people" element={<PeopleView />} />
+          <Route path="/people/:id/timeline" element={<TimelineView />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
